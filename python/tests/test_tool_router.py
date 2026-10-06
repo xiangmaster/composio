@@ -180,6 +180,26 @@ class TestToolRouter:
         # Verify API was called
         mock_client.tool_router.session.create.assert_called_once()
 
+    @pytest.mark.parametrize("proxy_execute", [{"enable": True}, {"enable": False}, {}])
+    def test_create_sends_proxy_execute_as_given(
+        self, tool_router, mock_client, proxy_execute
+    ):
+        tool_router.create(user_id="user_123", proxy_execute=proxy_execute)
+        kwargs = mock_client.tool_router.session.create.call_args.kwargs
+        assert kwargs["extra_body"] == {"proxy_execute": proxy_execute}
+
+    def test_create_sends_proxy_execute_alongside_instant(
+        self, tool_router, mock_client
+    ):
+        tool_router.create(
+            user_id="user_123", proxy_execute={"enable": True}, instant=False
+        )
+        kwargs = mock_client.tool_router.session.create.call_args.kwargs
+        assert kwargs["extra_body"] == {
+            "instant": False,
+            "proxy_execute": {"enable": True},
+        }
+
     def test_create_with_instant_policy(self, tool_router, mock_client):
         policy = {"toolkits": {"enable": ["exa"]}, "return_instant_charge": True}
         tool_router.create(user_id="user_123", instant=policy)
@@ -2715,6 +2735,22 @@ class TestSessionUpdateContract:
 
     def test_session_tracks_config_version(self, session):
         assert session.config_version == 7
+
+    @pytest.mark.parametrize(
+        "proxy_execute", [{"enable": True}, {"enable": False}, None]
+    )
+    def test_proxy_execute_is_sent_as_given(self, session, mock_client, proxy_execute):
+        session.update(proxy_execute=proxy_execute, expected_config_version=7)
+        kwargs = mock_client.tool_router.session.patch.call_args.kwargs
+        assert kwargs["extra_body"] == {
+            "expected_config_version": 7,
+            "proxy_execute": proxy_execute,
+        }
+
+    def test_proxy_execute_is_omitted_by_default(self, session, mock_client):
+        session.update(toolkits={"enable": ["gmail"]})
+        kwargs = mock_client.tool_router.session.patch.call_args.kwargs
+        assert kwargs["extra_body"] is None
 
     def test_instant_policy_is_sent(self, session, mock_client):
         session.update(

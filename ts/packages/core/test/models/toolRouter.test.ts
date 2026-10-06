@@ -221,6 +221,21 @@ describe('ToolRouter', () => {
       expect(mockClient.toolRouter.session.create.mock.calls[2]?.[0]).not.toHaveProperty('instant');
     });
 
+    it('sends proxyExecute.enable as given and leaves it unset otherwise', async () => {
+      mockClient.toolRouter.session.create.mockResolvedValue(mockSessionCreateResponse);
+
+      await toolRouter.create(userId, { proxyExecute: { enable: true } });
+      await toolRouter.create(userId, { proxyExecute: { enable: false } });
+      await toolRouter.create(userId, { proxyExecute: {} });
+      await toolRouter.create(userId);
+
+      const bodies = mockClient.toolRouter.session.create.mock.calls.map(call => call[0]);
+      expect(bodies[0]).toMatchObject({ proxy_execute: { enable: true } });
+      expect(bodies[1]).toMatchObject({ proxy_execute: { enable: false } });
+      expect(bodies[2].proxy_execute).toEqual({});
+      expect(bodies[3]).not.toHaveProperty('proxy_execute');
+    });
+
     describe('basic session creation', () => {
       it('should create a session with minimal configuration', async () => {
         mockClient.toolRouter.session.create.mockResolvedValueOnce(mockSessionCreateResponse);

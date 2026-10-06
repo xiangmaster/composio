@@ -177,6 +177,18 @@ class ToolRouterInstantConfig(te.TypedDict, total=False):
     return_instant_charge: bool
 
 
+class ToolRouterProxyExecuteConfig(te.TypedDict, total=False):
+    """Proxy execute settings for a Session.
+
+    ``enable`` has three states and no default: ``True`` exposes the
+    ``COMPOSIO_PROXY_EXECUTE`` meta tool, ``False`` also turns off the sandbox
+    ``proxy_execute()`` helper, and unset leaves the meta tool off while
+    ``sandbox.enable_proxy_execution`` controls the helper.
+    """
+
+    enable: bool
+
+
 class ToolRouterSessionExecuteResponse(SessionExecuteResponse):
     """Result of :meth:`ToolRouterSession.execute`."""
 
@@ -1130,6 +1142,7 @@ class ToolRouterSession(t.Generic[TTool, TToolCollection]):
             t.Optional[ToolRouterUpdateMultiAccountConfig],
             "Omit",
         ] = omit,
+        proxy_execute: t.Union[t.Optional[ToolRouterProxyExecuteConfig], "Omit"] = omit,
         preload: t.Union[t.Optional[session_patch_params.Preload], "Omit"] = omit,
         search: t.Union[t.Optional[session_patch_params.Search], "Omit"] = omit,
         execute: t.Union[t.Optional[session_patch_params.Execute], "Omit"] = omit,
@@ -1153,6 +1166,10 @@ class ToolRouterSession(t.Generic[TTool, TToolCollection]):
         access or an object to set its filters; it does not accept ``None``.
         Any object, even one that only sets ``return_instant_charge``,
         re-enables Instant usage on a Session set to ``False``.
+        ``proxy_execute`` is sent as given: ``{"enable": True}`` exposes the
+        ``COMPOSIO_PROXY_EXECUTE`` meta tool, ``{"enable": False}`` also turns
+        off the sandbox ``proxy_execute()`` helper, and ``None`` removes the
+        stored block so ``enable`` is unset again.
 
         By default the request carries no precondition: the last writer wins.
         Pass ``expected_config_version`` (for example this object's
@@ -1203,8 +1220,9 @@ class ToolRouterSession(t.Generic[TTool, TToolCollection]):
 
         workbench_payload = sandbox if sandbox is not omit else workbench
 
-        # The generated client has no typed parameter for the precondition, so
-        # it travels as an extra root body field.
+        # The generated client has no typed parameter for the precondition,
+        # ``instant`` or ``proxy_execute``, so they travel as extra root body
+        # fields.
         extra_body: t.Optional[t.Dict[str, t.Any]] = (
             None
             if isinstance(precondition, Omit)
@@ -1213,6 +1231,8 @@ class ToolRouterSession(t.Generic[TTool, TToolCollection]):
         if not isinstance(instant, Omit):
             # Send the new wire contract without passing the old generated keyword.
             extra_body = {**(extra_body or {}), "instant": instant}
+        if not isinstance(proxy_execute, Omit):
+            extra_body = {**(extra_body or {}), "proxy_execute": proxy_execute}
 
         # The generated client does not type ``None`` for every policy block
         # although the API accepts it (it removes the stored override), nor the

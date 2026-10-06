@@ -233,6 +233,24 @@ export const ToolRouterConfigToolsSchema = z
   });
 export type ToolRouterConfigTools = z.infer<typeof ToolRouterConfigToolsSchema>;
 
+/**
+ * Proxy execute settings for a session. `enable` has three states and no
+ * default: `true` exposes the `COMPOSIO_PROXY_EXECUTE` meta tool, `false` also
+ * turns off the sandbox `proxy_execute()` helper, and unset leaves the meta
+ * tool off while `sandbox.enableProxyExecution` controls the helper.
+ */
+export const ToolRouterProxyExecuteConfigSchema = z
+  .object({
+    enable: z
+      .boolean()
+      .optional()
+      .describe(
+        'true exposes the COMPOSIO_PROXY_EXECUTE meta tool. false also turns off the sandbox proxy_execute() helper. Unset keeps the meta tool off and leaves the helper to sandbox.enableProxyExecution.'
+      ),
+  })
+  .strict();
+export type ToolRouterProxyExecuteConfig = z.infer<typeof ToolRouterProxyExecuteConfigSchema>;
+
 const ToolRouterCreateSessionConfigBaseSchema = z
   .object({
     sessionPreset: z
@@ -318,6 +336,10 @@ const ToolRouterCreateSessionConfigBaseSchema = z
       })
       .optional()
       .describe('Multi-account configuration for this session'),
+
+    proxyExecute: ToolRouterProxyExecuteConfigSchema.optional().describe(
+      'Proxy execute configuration for this session. Rejected by the API when enable is false and sandbox.enableProxyExecution is true.'
+    ),
 
     preload: z
       .object({
@@ -440,6 +462,8 @@ export const ToolRouterCreateSessionConfigSchema = z
  * @param {boolean} [multiAccount.enable] - When true, enables multi-account mode. Falls back to org/project-level config when not set.
  * @param {number} [multiAccount.maxAccountsPerToolkit] - Max connected accounts per toolkit (2-10, default 5)
  * @param {boolean} [multiAccount.requireExplicitSelection] - When true, require explicit account selection when multiple accounts are connected
+ * @param {object} [proxyExecute] - Proxy execute configuration for this session
+ * @param {boolean} [proxyExecute.enable] - `true` exposes the `COMPOSIO_PROXY_EXECUTE` meta tool. `false` also turns off the sandbox `proxy_execute()` helper. Unset keeps the meta tool off.
  * @param {object} [preload] - Tools to preload into session.tools() and the MCP tool list
  * @param {string[] | 'all'} [preload.tools] - Tool slugs to preload, or "all" to preload every app tool allowed by the session filters. "all" requires a positive filter such as toolkits, tools, or tags; the backend validates and caps the final tool set.
  * @param {object} [experimental] - Experimental features configuration. Not stable; may change or be removed.
@@ -730,6 +754,8 @@ export type ToolRouterInstantResponse = z.infer<typeof ToolRouterInstantResponse
  */
 export type ToolRouterSessionConfig = Omit<SessionCreateResponse.Config, 'premium_usage'> & {
   instant?: false | ToolRouterInstantResponse;
+  /** Absent while `enable` is unset. */
+  proxy_execute?: ToolRouterProxyExecuteConfig;
 };
 
 export interface ToolRouterSessionMetadata {
@@ -936,6 +962,9 @@ export const ToolRouterUpdateSessionConfigSchema = z
       .nullable()
       .optional()
       .describe('`null` removes the session override; the mode then resolves to disabled'),
+    proxyExecute: ToolRouterProxyExecuteConfigSchema.nullable()
+      .optional()
+      .describe('Replaces the proxy execute block; `null` removes it so `enable` is unset again'),
     preload: z
       .object({
         tools: z.union([z.array(z.string()), z.literal('all')]).optional(),

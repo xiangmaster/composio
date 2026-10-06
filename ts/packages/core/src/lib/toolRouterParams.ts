@@ -18,6 +18,7 @@ import {
   ToolRouterUpdateExperimentalConfig,
   ToolRouterSandboxConfig,
   ToolRouterInstant,
+  ToolRouterProxyExecuteConfig,
 } from '../types/toolRouter.types';
 import { ValidationError } from '../errors';
 import { z } from 'zod';
@@ -202,6 +203,7 @@ export type SessionPatchBody = Omit<
   experimental?: SessionPatchExperimentalBody | null;
   expected_config_version?: number;
   instant?: SessionInstantBody;
+  proxy_execute?: ToolRouterProxyExecuteConfig | null;
 };
 
 /** SDK-owned wire contract until the generated client adopts the Instant names. */
@@ -213,6 +215,7 @@ export type SessionInstantBody =
 
 export type SessionCreateBody = Omit<SessionCreateParams, 'premium_usage'> & {
   instant?: SessionInstantBody;
+  proxy_execute?: ToolRouterProxyExecuteConfig;
 };
 
 export const transformToolRouterInstantParams = (config: ToolRouterInstant): SessionInstantBody => {
@@ -400,6 +403,9 @@ export const transformToolRouterUpdateParams = (
         ma.require_explicit_selection = config.multiAccount.requireExplicitSelection;
       params.multi_account = ma;
     }
+  }
+  if (config.proxyExecute !== undefined) {
+    params.proxy_execute = config.proxyExecute;
   }
   if (config.preload !== undefined) {
     params.preload = config.preload;
