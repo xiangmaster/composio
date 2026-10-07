@@ -22117,6 +22117,21 @@
                             "description": "Toolkit provenance: \"native\" for Composio-managed toolkits, \"custom\" for a project-registered custom (MCP) toolkit",
                             "example": "native"
                           },
+                          "instant": {
+                            "type": "object",
+                            "properties": {
+                              "supported": {
+                                "type": "boolean",
+                                "enum": [
+                                  true
+                                ]
+                              }
+                            },
+                            "required": [
+                              "supported"
+                            ],
+                            "description": "Present when the latest version of this toolkit supports Instant accounts. See the tools endpoint for support on individual tools."
+                          },
                           "access": {
                             "type": "string",
                             "enum": [
@@ -23632,6 +23647,21 @@
                             ],
                             "description": "Toolkit provenance: \"native\" for Composio-managed toolkits, \"custom\" for a project-registered custom (MCP) toolkit",
                             "example": "native"
+                          },
+                          "instant": {
+                            "type": "object",
+                            "properties": {
+                              "supported": {
+                                "type": "boolean",
+                                "enum": [
+                                  true
+                                ]
+                              }
+                            },
+                            "required": [
+                              "supported"
+                            ],
+                            "description": "Present when the latest version of this toolkit supports Instant accounts. See the tools endpoint for support on individual tools."
                           },
                           "access": {
                             "type": "string",
