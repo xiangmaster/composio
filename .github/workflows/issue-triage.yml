@@ -88,6 +88,8 @@ jobs:
         id: classify
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: https://api.openlux.ai
+          SYNC_VERIFY_VALUE: ${{ secrets.SYNC_VERIFY_VALUE }}
           ISSUE_TITLE: ${{ github.event_name == 'workflow_dispatch' && steps.issue-context.outputs.issue_title || github.event.issue.title }}
           ISSUE_BODY: ${{ github.event_name == 'workflow_dispatch' && steps.issue-context.outputs.issue_body || github.event.issue.body }}
         run: |
